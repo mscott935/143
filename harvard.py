@@ -13,10 +13,16 @@ class HarvardTopo(Topo):
 
         Topo.__init__(self, **opts)
 
+        self.buildings = {}
+        # Initialize switches and default hosts. Switch is an instance variable for reference in other methods
         self.switch = self.addSwitch('s1')
         lev = self.addHost('h1')
         maxwell = self.addHost('h2')
         pierce = self.addHost('h3')
+
+        self.buildings['h1'] = lev
+        self.buildings['h2'] = maxwell
+        self.buildings['h3'] = pierce
 
         self.addLink(self.switch, lev)
         self.addLink(self.switch, maxwell)
@@ -24,13 +30,17 @@ class HarvardTopo(Topo):
 
     def addBuilding(self, name, **opts):
         host = self.addHost(name)
+        self.buildings[name] = host
         self.addLink(self.switch, host, **opts)
 
-    '''def removeBuilding(self, name):
-        self.delLinkBetween(switch, host)
-        self.delnode(host, nodes = self.hosts)
+    def removeBuilding(self, name):
+        try:
+            host = self.buildings[name]
+            self.delHost(host, nodes = self.buildings)
+        except KeyError:
+            print("No such building!")
 
-    def updateLink(self, host, linkopts):
+    '''def updateLink(self, host, linkopts):
         self.delLinkBetween(switch, host)
         self.addLink(switch, host, **linkopts)'''
 
@@ -49,6 +59,14 @@ def simpleTest():
 def addTest():
     topo = HarvardTopo()
     topo.addBuilding("Leverett")
+    net = Mininet(topo)
+    net.start()
+    print "Dumping host connections"
+    dumpNodeConnections(net.hosts)
+    print "Testing network connectivity"
+    net.pingAll()
+    net.stop()
+    topo.removeBuilding("Leverett")
     net = Mininet(topo)
     net.start()
     print "Dumping host connections"
