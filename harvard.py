@@ -7,6 +7,12 @@ from mininet.log import setLogLevel
 import sched, datetime, time
 
 s = sched.scheduler(time.time, time.sleep)
+profileR1 = dict(bw = 500, delay='5ms', loss = 10)
+profileR2 = dict(bw = 350, delay='5ms', loss = 0)
+profileS1 = dict(bw = 100, delay ='5ms', loss = 0)
+profileS2 = dict(bw = 200, delay = '5ms', loss = 0)
+profileS3 = dict(bw = 300, delay = '5ms', loss = 10)
+profileS4 = dict(bw = 125, delay = '5ms', loss = 10)
 
 class HarvardTopo(Topo):
     '''Create topology that mimics some Harvard locations and buildings, including Leverett House,
@@ -20,9 +26,9 @@ class HarvardTopo(Topo):
         maxwell = self.addHost('h2')
         pierce = self.addHost('h3')
 
-        self.buildings['h1'] = lev
-        self.buildings['h2'] = maxwell
-        self.buildings['h3'] = pierce
+        self.buildings['Leverett'] = (lev, "R")
+        self.buildings['Maxwell Dworkin'] = (maxwell, "S")
+        self.buildings['Pierce'] = (pierce, "S")
 
         self.addLink(self.switch, lev)
         self.addLink(self.switch, maxwell)
@@ -45,38 +51,51 @@ def simpleTest():
     net.pingAll()
     net.stop()
 
-def addTest():
-    print "Running add test"
-    topo = HarvardTopo()
-    topo.addBuilding("Leverett")
-    net = Mininet(topo)
-    net.start()
-    print "Dumping host connections"
-    dumpNodeConnections(net.hosts)
-    print "Testing network connectivity"
-    net.pingAll()
-    net.stop()
-
-def bump():
-    "Increase bandwidth by small, predetermined amount"
-    # TODO
-
-def updateLinks(profile):
+def updateLinks(profile, net, topo):
     "Update link bandwidth based on time of day and building profile."
     time = datetime.datetime.now()
+    switch = net.get('s1')
     if profile == "R":
+        # Gather all residential hosts
+        resHosts = []
+        for i, building in enumerate(topo.buildings):
+            if building[i][1] == "R":
+                resHosts.append(building[i][0])
+        print(resHosts)
+        # Downtime hours
         if time.hour > 5 && time.hour < 17:
-            # Update links to downtime bandwidth
+            for host in resHosts:
+                delLinkBetween(host, switch)
+                addLink(host, switch, **profileR2)
+        # Uptime hours
         else:
-            # Update links to uptime bandwidth
+            for host in resHosts:
+                delLinkBetween(host, switch)
+                addLink(host, switch, **profileR1)
     elif profile == "S":
-        # TODO
-
-def runNetwork():
-    topo = HarvardTopo()
-    net = Mininet(topo)
-    net.start()
-
+        sciHosts = []
+        for i, building in enumerate(topo.buildings):
+            if building[i][1] == "S":
+                sciHosts.append(building[i][0])
+        print(resHosts)
+        if time.hour > 5 && time.hour < 13:
+            for host in sciHosts:
+                delLinkBetween(host, switch)
+                addLink(host, switch, **profileS2)
+        elif time.hour > 13 and time.hour < 17:
+            for host in sciHosts:
+                delLinkBetween(host, switch)
+                addLink(host, switch, **profileS3)
+        elif time.hour > 17 and time.hour < 22:
+            for host in sciHosts:
+                delLinkBetween(host, switch)
+                addLink(host, switch, **profileS4)
+        else:
+            for host in sciHosts:
+                delLinkBetween(host, switch)
+                addLink(host, switch, **profileS1)
+    else:
+        print(f"No profiles exist for a {profile} type building!")
 
 if __name__ == '__main__':
     # Tell mininet to print useful information
