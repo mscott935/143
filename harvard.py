@@ -57,48 +57,44 @@ def updateLinks(profile, net, topo):
     switch = net.get('s1')
     if profile == "R":
         # Gather all residential hosts
-        resHosts = []
-        for i, building in enumerate(topo.buildings):
-            if building[i][1] == "R":
-                resHosts.append(building[i][0])
+        resHosts = [x[0] for x in topo.buildings if x[1] == "R"]
         print(resHosts)
-        # Downtime hours
-        if time.hour > 5 && time.hour < 17:
-            for host in resHosts:
-                delLinkBetween(host, switch)
-                addLink(host, switch, **profileR2)
-        # Uptime hours
-        else:
-            for host in resHosts:
-                delLinkBetween(host, switch)
-                addLink(host, switch, **profileR1)
+        for host in resHosts:
+            links = host.connectionsTo(switch)
+            srcLink = links[0][1]
+            dstLink = links[0][1]
+            if time.hour == 5:
+                srcLink.config(**{'bw' : 350, 'loss' : 0})
+                dstLink.config(**{'bw' : 350, 'loss' : 0})
+            elif time.hour == 17:
+                srcLink.config(**{'bw' : 500, 'loss' : 0})
+                dstLink.config(**{'bw' : 500, 'loss' : 10})
+            else:
+                print("Unsupported link update time at time!")
     elif profile == "S":
-        sciHosts = []
-        for i, building in enumerate(topo.buildings):
-            if building[i][1] == "S":
-                sciHosts.append(building[i][0])
-        print(resHosts)
-        if time.hour > 5 && time.hour < 13:
-            for host in sciHosts:
-                delLinkBetween(host, switch)
-                addLink(host, switch, **profileS2)
-        elif time.hour > 13 and time.hour < 17:
-            for host in sciHosts:
-                delLinkBetween(host, switch)
-                addLink(host, switch, **profileS3)
-        elif time.hour > 17 and time.hour < 22:
-            for host in sciHosts:
-                delLinkBetween(host, switch)
-                addLink(host, switch, **profileS4)
-        else:
-            for host in sciHosts:
-                delLinkBetween(host, switch)
-                addLink(host, switch, **profileS1)
+        sciHosts = [x[0] for x in topo.buildings if x[1] == "S"]
+        for hosts in sciHosts:
+            links = host.connectionsTo(switch)
+            srcLink = links[0][1]
+            dstLink = links[0][1]
+            if time.hour == 5:
+                srcLink.config(**{'bw' : 100, 'loss' : 0})
+                dstLink.config(**{'bw' : 100, 'loss' : 0})
+            elif time.hour == 13:
+                srcLink.config(**{'bw' : 200, 'loss' : 0})
+                dstLink.config(**{'bw' : 200, 'loss' : 0})
+            elif time.hour == 17:
+                srcLink.config(**{'bw' : 300, 'loss' : 0})
+                dstLink.config(**{'bw' : 300, 'loss' : 0})
+            elif time.hour == 22:
+                srcLink.config(**{'bw' : 125, 'loss' : 0})
+                dstLink.config(**{'bw' : 125, 'loss' : 0})
+            else:
+                print("Unsupported link update time at time!")
     else:
-        print(f"No profiles exist for a {profile} type building!")
+        print("Unsupported link update time at time!")
 
 if __name__ == '__main__':
     # Tell mininet to print useful information
     setLogLevel('info')
     simpleTest()
-    addTest()
