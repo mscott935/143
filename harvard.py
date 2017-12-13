@@ -43,33 +43,42 @@ def updateLinks(profile, net, topo, time=datetime.datetime.now()):
         resHosts = [buildings[x][0] for x in buildings if buildings[x][1] == "R"]
         for hostname in resHosts:
             host = net.get(hostname)
+            # Name source and destination links
             links = host.connectionsTo(switch)
             srcLink = links[0][1]
             dstLink = links[0][1]
+            # Downtime profile (5am - 5pm)
             if time.hour >= 5 and time.hour < 17:
                 srcLink.config(**{'bw' : 350, 'loss' : 0})
                 dstLink.config(**{'bw' : 350, 'loss' : 0})
+            # Uptime profile (5pm - 5am)
             elif time.hour >= 17 or time.hour < 5:
                 srcLink.config(**{'bw' : 500, 'loss' : 0})
                 dstLink.config(**{'bw' : 500, 'loss' : 10})
             else:
                 print "Unsupported link update time at time " + time.hour + "!"
     elif profile == "S":
+        # Gather all STEM lab hosts
         sciHosts = [buildings[x][0] for x in buildings if buildings[x][1] == "S"]
         for hostname in sciHosts:
             host = net.get(hostname)
+            # Name source and destination links
             links = host.connectionsTo(switch)
             srcLink = links[0][1]
             dstLink = links[0][1]
+            # Peak 1 profile (5am - 1pm)
             if time.hour >= 5 and time.hour < 13:
                 srcLink.config(**{'bw' : 200, 'loss' : 0})
                 dstLink.config(**{'bw' : 200, 'loss' : 0})
+            # Peak 2 profile (1pm - 5pm)
             elif time.hour >= 13 and time.hour < 17:
-                srcLink.config(**{'bw' : 200, 'loss' : 0})
-                dstLink.config(**{'bw' : 200, 'loss' : 0})
-            elif time.hour >= 17 and time.hour < 22:
                 srcLink.config(**{'bw' : 300, 'loss' : 0})
                 dstLink.config(**{'bw' : 300, 'loss' : 0})
+            # Descent profile (5pm - 10pm)
+            elif time.hour >= 17 and time.hour < 22:
+                srcLink.config(**{'bw' : 125, 'loss' : 0})
+                dstLink.config(**{'bw' : 125, 'loss' : 0})
+            # Downtime profile (10pm - 5am)
             elif time.hour >= 22 or time.hour < 5:
                 srcLink.config(**{'bw' : 100, 'loss' : 0})
                 dstLink.config(**{'bw' : 100, 'loss' : 0})
@@ -135,4 +144,5 @@ def updateTest():
 if __name__ == '__main__':
     # Tell mininet to print useful information
     setLogLevel('info')
+    updateTest()
     runNetwork()
