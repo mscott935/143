@@ -1,6 +1,6 @@
-click==6.7
-Flask==0.12.2
-itsdangerous==0.24
-Jinja2==2.9.6
-MarkupSafe==1.0
-Werkzeug==0.12.2
+mininet==2.2.2
+pep8==1.4.6
+python-apt==0.9.3.5ubuntu2
+python-debian==0.1.21-nmu2ubuntu2
+schedule==0.5.0
+
